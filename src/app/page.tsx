@@ -43,6 +43,7 @@ export default function HomePage() {
 
   // Live polling mode
   const [isPolling, setIsPolling] = useState(false);
+  const [oauthNotConfigured, setOauthNotConfigured] = useState(false);
 
   // Load saved accounts from local storage API
   const refreshAccounts = useCallback(async () => {
@@ -55,6 +56,25 @@ export default function HomePage() {
     } catch (err) {
       console.error('Failed to load accounts:', err);
     }
+  }, []);
+
+  useEffect(() => {
+    refreshAccounts();
+    // Handle OAuth redirect results
+    const params = new URLSearchParams(window.location.search);
+    const oauthSuccess = params.get('oauth_success');
+    const oauthError = params.get('oauth_error');
+    if (oauthSuccess) {
+      window.history.replaceState({}, '', '/');
+      refreshAccounts();
+      // Auto-fetch emails for the newly connected account
+      setTimeout(() => handleFetchEmails(oauthSuccess), 500);
+    }
+    if (oauthError) {
+      window.history.replaceState({}, '', '/');
+      setFetchError(`Microsoft Sign-In failed: ${oauthError}`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -222,16 +242,35 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Sign in with Microsoft OAuth — primary fix for Basic Auth disabled */}
+            <div className="pt-2 border-t border-rose-500/20 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex-1 text-xs text-rose-200/80">
+                <span className="font-semibold text-white">Microsoft now requires OAuth login</span> — click the button to authorize access securely. No password needed.
+              </div>
+              <a
+                href="/api/auth/microsoft"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-[#0078d4] hover:bg-[#006cbe] text-white shadow-lg shadow-blue-600/30 transition-all cursor-pointer shrink-0 no-underline"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+                  <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+                  <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+                  <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+                </svg>
+                Sign in with Microsoft
+              </a>
+            </div>
+
             {/* Quick App Password Fix / Retry for Current Email */}
             {currentEmail && (
               <div className="pt-2 border-t border-rose-500/20 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
                 <div className="flex items-center gap-2 text-xs text-rose-300 font-medium shrink-0">
                   <Key className="w-4 h-4 text-rose-400" />
-                  <span>Update App Password for <code className="font-mono text-white">{currentEmail}</code>:</span>
+                  <span>Or try App Password for <code className="font-mono text-white">{currentEmail}</code>:</span>
                 </div>
                 <input
                   type="password"
-                  placeholder="Enter new 16-character App Password..."
+                  placeholder="Enter 16-character App Password..."
                   id="retry-app-password"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {

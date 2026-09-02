@@ -6,6 +6,7 @@ import { extractOtp, extractActionLinks } from './otp-extractor';
 export interface FetchOptions {
   email: string;
   password: string;
+  accessToken?: string;
   host?: string;
   port?: number;
   limit?: number;
@@ -64,18 +65,32 @@ export function resolveImapHost(email: string, customHost?: string): string {
 
 /**
  * Creates and connects an ImapFlow client.
+ * When accessToken is provided, uses XOAUTH2 instead of password auth.
  */
-export async function createImapClient(email: string, pass: string, host?: string, port = 993) {
+export async function createImapClient(
+  email: string,
+  pass: string,
+  host?: string,
+  port = 993,
+  accessToken?: string
+) {
   const resolvedHost = resolveImapHost(email, host);
+
+  const authConfig: any = accessToken
+    ? {
+        user: email.trim(),
+        accessToken: accessToken,
+      }
+    : {
+        user: email.trim(),
+        pass: pass.trim(),
+      };
 
   const client = new ImapFlow({
     host: resolvedHost,
     port,
     secure: true,
-    auth: {
-      user: email.trim(),
-      pass: pass.trim(),
-    },
+    auth: authConfig,
     logger: false,
     emitLogs: false,
     clientInfo: {
@@ -94,10 +109,11 @@ export async function testImapConnection(
   email: string,
   pass: string,
   host?: string,
-  port = 993
+  port = 993,
+  accessToken?: string
 ): Promise<{ success: boolean; error?: string }> {
   const resolvedHost = resolveImapHost(email, host);
-  const client = await createImapClient(email, pass, resolvedHost, port);
+  const client = await createImapClient(email, pass, resolvedHost, port, accessToken);
   try {
     await client.connect();
     await client.logout();
@@ -114,12 +130,13 @@ export async function testImapConnection(
 export async function fetchRecentEmails({
   email,
   password,
+  accessToken,
   host,
   port = 993,
   limit = 20,
 }: FetchOptions): Promise<FetchResult> {
   const resolvedHost = resolveImapHost(email, host);
-  const client = await createImapClient(email, password, resolvedHost, port);
+  const client = await createImapClient(email, password, resolvedHost, port, accessToken);
 
   try {
     await client.connect();

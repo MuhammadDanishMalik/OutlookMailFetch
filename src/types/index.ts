@@ -10,6 +10,10 @@ export interface Account {
   lastCheckedAt?: string;
   status?: 'healthy' | 'error' | 'untested';
   lastError?: string;
+  // Microsoft OAuth2 tokens for XOAUTH2 IMAP
+  accessToken?: string;
+  refreshToken?: string;
+  tokenExpiresAt?: string;
 }
 
 export interface ExtractedOtp {
