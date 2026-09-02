@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { testImapConnection } from '@/lib/imap-service';
+import { testImapConnection, resolveImapHost } from '@/lib/imap-service';
 import { getAccountByEmail, updateAccountStatus } from '@/lib/storage';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, password: directPassword, host = 'imap.mail.yahoo.com', port = 993 } = body;
+    const { email, password: directPassword, host, port } = body;
 
     if (!email) {
       return NextResponse.json({ success: false, error: 'Email is required' }, { status: 400 });
     }
 
+    const cleanEmail = email.trim();
+    const saved = getAccountByEmail(cleanEmail);
     let password = directPassword;
-    const saved = getAccountByEmail(email);
     if (!password && saved) {
       password = saved.password;
     }
@@ -24,7 +25,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await testImapConnection(email, password, host, port);
+    const imapHost = resolveImapHost(cleanEmail, host || saved?.imapHost);
+    const imapPort = port || saved?.imapPort || 993;
+
+    const result = await testImapConnection(cleanEmail, password, imapHost, imapPort);
 
     if (saved) {
       updateAccountStatus(saved.id, result.success ? 'healthy' : 'error', result.error);

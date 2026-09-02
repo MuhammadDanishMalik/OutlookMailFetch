@@ -63,10 +63,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
     setShowSuggestions(false);
 
-    if (matchedAccount) {
-      onSearch(inputEmail.trim());
-    } else if (customPassword.trim()) {
+    if (customPassword.trim()) {
       onSearch(inputEmail.trim(), customPassword.trim(), saveToVault);
+    } else if (matchedAccount) {
+      onSearch(inputEmail.trim());
     } else {
       setShowManualPassword(true);
     }
@@ -86,7 +86,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             onChange={(e) => {
               setInputEmail(e.target.value);
               setShowSuggestions(true);
-              if (matchedAccount) setShowManualPassword(false);
             }}
             onFocus={() => setShowSuggestions(true)}
             placeholder="Enter Outlook / Hotmail / Email address (e.g. user@outlook.com)..."
@@ -95,10 +94,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           />
 
           {matchedAccount && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 mr-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowManualPassword(!showManualPassword)}
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 mr-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-medium shrink-0 cursor-pointer transition-colors"
+              title="Click to change saved password / App Password"
+            >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>In Vault</span>
-            </div>
+              <span className="text-[10px] text-emerald-300/80 underline ml-0.5">Edit Pass</span>
+            </button>
           )}
 
           <button

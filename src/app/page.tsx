@@ -193,24 +193,68 @@ export default function HomePage() {
 
         {/* Error Alert Box */}
         {fetchError && (
-          <div className="max-w-4xl mx-auto p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-in fade-in">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-              <div className="text-xs space-y-1">
-                <p className="font-semibold text-rose-100">Connection or Authentication Notice</p>
-                <p className="text-rose-300/90">{fetchError}</p>
+          <div className="max-w-4xl mx-auto p-5 rounded-2xl bg-rose-950/40 border border-rose-500/40 text-rose-200 shadow-xl animate-in fade-in space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                <div className="text-xs space-y-1">
+                  <p className="font-semibold text-rose-100 text-sm">Connection or Authentication Notice</p>
+                  <p className="text-rose-300/90 leading-relaxed">{fetchError}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <a
+                  href="https://account.microsoft.com/security"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600/30 hover:bg-rose-600/50 text-rose-200 border border-rose-500/40 transition-colors cursor-pointer"
+                >
+                  Microsoft Security &rarr;
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setIsGuideOpen(true)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/15 text-gray-200 border border-white/10 transition-colors cursor-pointer"
+                >
+                  Outlook Guide
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-              <button
-                type="button"
-                onClick={() => setIsGuideOpen(true)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 transition-colors cursor-pointer"
-              >
-                Outlook Guide
-              </button>
-            </div>
+            {/* Quick App Password Fix / Retry for Current Email */}
+            {currentEmail && (
+              <div className="pt-2 border-t border-rose-500/20 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <div className="flex items-center gap-2 text-xs text-rose-300 font-medium shrink-0">
+                  <Key className="w-4 h-4 text-rose-400" />
+                  <span>Update App Password for <code className="font-mono text-white">{currentEmail}</code>:</span>
+                </div>
+                <input
+                  type="password"
+                  placeholder="Enter new 16-character App Password..."
+                  id="retry-app-password"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = (e.target as HTMLInputElement).value;
+                      if (val) handleFetchEmails(currentEmail, val, true);
+                    }
+                  }}
+                  className="flex-1 bg-black/60 border border-rose-500/30 rounded-xl px-3 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:border-rose-400 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('retry-app-password') as HTMLInputElement;
+                    if (el && el.value.trim()) {
+                      handleFetchEmails(currentEmail, el.value.trim(), true);
+                    }
+                  }}
+                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-all shadow-md shadow-rose-600/30 cursor-pointer shrink-0"
+                >
+                  Save &amp; Retry
+                </button>
+              </div>
+            )}
           </div>
         )}
 

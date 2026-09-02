@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { Account } from '@/types';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const isVercel = !!process.env.VERCEL;
+const DATA_DIR = isVercel ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
 const ACCOUNTS_FILE = path.join(DATA_DIR, 'accounts.json');
 
 function ensureDataDirectory() {

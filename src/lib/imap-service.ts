@@ -296,24 +296,51 @@ export async function fetchRecentEmails({
 
 function formatImapError(err: any, host: string): string {
   const msg = (err?.message || String(err)).toLowerCase();
+  const response = (err?.response || '').toLowerCase();
+  const responseText = (err?.responseText || '').toLowerCase();
+  const executed = (err?.executedCommand || '').toLowerCase();
 
-  if (
+  const isAuth =
+    err?.authenticationFailed === true ||
+    err?.name === 'AuthenticationFailure' ||
     msg.includes('authentication') ||
-    msg.includes('login failed') ||
+    msg.includes('login') ||
     msg.includes('invalid credentials') ||
+    msg.includes('command failed') ||
     msg.includes('auth') ||
     msg.includes('user is locked') ||
-    msg.includes('account is blocked')
-  ) {
-    if (host.includes('outlook') || host.includes('office365')) {
-      return 'Outlook / Microsoft Authentication Failed. If 2-Step Verification is active, please generate an App Password in Microsoft Account Security (account.microsoft.com/security) or check email & password.';
+    msg.includes('account is blocked') ||
+    response.includes('authenticate failed') ||
+    response.includes('authentication') ||
+    response.includes('not supported') ||
+    responseText.includes('authenticate failed') ||
+    responseText.includes('authentication') ||
+    responseText.includes('not supported') ||
+    executed.includes('authenticate') ||
+    executed.includes('login');
+
+  if (isAuth) {
+    if (
+      host.includes('outlook') ||
+      host.includes('office365') ||
+      host.includes('hotmail') ||
+      host.includes('live') ||
+      host.includes('msn')
+    ) {
+      return 'Microsoft / Outlook Authentication Error: Microsoft requires an App Password instead of a regular password for IMAP connections. Please generate a 16-character App Password at account.microsoft.com/security (Advanced Security Options > App Passwords) and use it here.';
     }
-    return 'Authentication Failed. Please check your credentials or generate an App Password in your email security settings.';
+    if (host.includes('yahoo') || host.includes('ymail') || host.includes('rocketmail')) {
+      return 'Yahoo Authentication Error: Yahoo requires a generated 16-character Yahoo App Password. Please generate one at login.yahoo.com/account/security and use it instead of your standard password.';
+    }
+    if (host.includes('gmail')) {
+      return 'Gmail Authentication Error: Google requires a 16-character Google App Password from myaccount.google.com/apppasswords.';
+    }
+    return 'Authentication Failed: Please check your credentials or generate an App Password in your email provider security settings.';
   }
 
   if (msg.includes('enotfound') || msg.includes('timeout') || msg.includes('econnrefused')) {
-    return `Connection Error: Unable to reach IMAP server (${host}:993). Please check your internet connection.`;
+    return `Connection Error: Unable to reach IMAP server (${host}:993). Please check your internet connection or IMAP host settings.`;
   }
 
-  return `IMAP Error: ${err?.message || 'Unknown error occurred while accessing mailbox'}`;
+  return `IMAP Error: ${err?.responseText || err?.message || 'Unknown error occurred while accessing mailbox'}`;
 }
